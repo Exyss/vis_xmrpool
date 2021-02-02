@@ -38,13 +38,13 @@ def _formatTotalStatsData(totalStats):
             'lastShare': "unknown"}
 
     # get data if found
-    if ('balance' in totalStats): data['balance'] = totalStats['balance']
-    if ('last_reward' in totalStats): data['lastReward'] = totalStats['last_reward']
-    if ('paid' in totalStats): data['paid'] = totalStats['paid']
+    if ('balance' in totalStats): data['balance'] = "{:.12f}".format(int(totalStats['balance'])/10**12)
+    if ('last_reward' in totalStats): data['lastReward'] = "{:.12f}".format(int(totalStats['last_reward'])/10**12)
+    if ('paid' in totalStats): data['paid'] = "{:.12f}".format(int(totalStats['paid'])/10**12)
     if ('hashrate' in totalStats): data['hashrate'] = totalStats['hashrate']
-    if ('hashes' in totalStats): data['hashes'] = totalStats['hashes']
-    if ('expired' in totalStats): data['expired'] = totalStats['expired']
-    if ('invalid' in totalStats): data['invalid'] = totalStats['invalid']
+    if ('hashes' in totalStats): data['hashes'] = f"{int(totalStats['hashes']):,}"
+    if ('expired' in totalStats): data['expired'] = f"{int(totalStats['expired']):,}"
+    if ('invalid' in totalStats): data['invalid'] = f"{int(totalStats['invalid']):,}"
     if ('lastShare' in totalStats): data['lastShare'] = strftime("%d-%m-%y %H:%M:%S", gmtime(int(totalStats['lastShare'])))
     return data
 
@@ -60,9 +60,9 @@ def _formatWorkerData(worker):
     # get data if found
     if ('workerId' in worker): data['workerId'] = worker['workerId']
     if ('hashrate' in worker): data['hashrate'] = worker['hashrate']
-    if ('hashes' in worker): data['hashes'] = worker['hashes']
-    if ('expired' in worker): data['expired'] = worker['expired']
-    if ('invalid' in worker): data['invalid'] = worker['invalid']
+    if ('hashes' in worker): data['hashes'] = f"{int(worker['hashes']):,}"
+    if ('expired' in worker): data['expired'] = f"{int(worker['expired']):,}"
+    if ('invalid' in worker): data['invalid'] = f"{int(worker['invalid']):,}"
     if ('lastShare' in worker): data['lastShare'] = strftime("%d-%m-%y %H:%M:%S", gmtime(int(worker['lastShare'])))
     return data
 

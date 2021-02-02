@@ -3,6 +3,11 @@
 from xmrpoolAPI import *
 import sys, getopt
 
+def applyRedText(text): return "\033[91m {}\033[00m".format(text)
+def applyGreenText(text): return "\033[92m {}\033[00m".format(text)
+def applyYellowText(text): return "\033[93m {}\033[00m".format(text)
+def applyCyanText(text): return "\033[96m {}\033[00m".format(text)
+
 def printHelp():
     print("----------------------------",
           "  xmrpool.eu Stat Visualizer",
@@ -17,24 +22,28 @@ def printHelp():
           "\t\tDisplay help prompt",
           "",
           "\t-a <wallet_address>",
-          "\t\tDisplay this wallet's worker stats",
+          "\t\tSame all info linked to this wallet",
+          "",
+          "\t-a <wallet_address> [-s, --stats][-w, --workers][-h, --help]",
+          "\t\tDisplay ",
           sep="\n")
 
 def formatTotalStatsTable(totalStats):
-    table =  "\t\t{:<15} | {:<29}\t\t{:<15} | {:<29}\n".format("PENDING BALANCE", totalStats['balance']+" XMR", "TOTAL PAID", totalStats['paid']+" XMR")
-    table += "\t\t{:<15} | {:<29}\t\t{:<15} | {:<29}\n".format("LAST REWARD", totalStats['lastReward']+" XMR", "TOTAL HASHES", totalStats['hashes'])
-    table += "\t\t{:<15} | {:<29}\t\t{:<15} | {:<29}\n".format("LAST SHARE", totalStats['lastShare'], "TOTAL HASHRATE", totalStats['hashrate'])
+    table =  "\t\t\033[96m {:<15}\033[00m | {:<29}\t\t\033[96m{:<15}\033[00m | {:<29}\n".format("PENDING BALANCE", totalStats['balance']+" XMR", "TOTAL HASHRATE", totalStats['hashrate'])
+    table += "\t\t\033[96m {:<15}\033[00m | {:<29}\t\t\033[96m{:<15}\033[00m | {:<29}\n".format("TOTAL PAID", totalStats['paid']+" XMR", "TOTAL HASHES", totalStats['hashes'])
+    table += "\t\t\033[96m {:<15}\033[00m | {:<29}\t\t\033[96m{:<15}\033[00m | {:<29}\n".format("LAST REWARD", totalStats['lastReward']+" XMR", "TOTAL EXPIRED", totalStats['expired'])
+    table += "\t\t\033[96m {:<15}\033[00m | {:<29}\t\t\033[96m{:<15}\033[00m | {:<29}\n".format("LAST SHARE", totalStats['lastShare'], "TOTAL INNVALID", totalStats['invalid'])
     return table
 
 def formatWorkersTable(workers):
-    table = " {:^21}   {:^14}   {:^16}   {:^16}   {:^16}   {:^19}\n".format("WORKER ID", "HASHRATE", "HASHES", "EXPIRED", "INVALID", "LAST SHARE")
+    table = " \033[91m{:^21}   {:^14}   {:^16}   {:^16}   {:^16}   {:^19}\033[00m\n".format("WORKER ID", "HASHRATE", "HASHES", "EXPIRED", "INVALID", "LAST SHARE")
     table += " {:^21}   {:^14}   {:^16}   {:^16}   {:^16}   {:^19}\n".format("-"*21, "-"*14, "-"*16, "-"*16, "-"*16, "-"*19)
     for worker in workers:
         table += " {:<21}   {:^14}   {:>16}   {:>16}   {:>16}   {:^19}\n".format(" "+worker['workerId'], worker['hashrate'], worker['hashes']+" ", worker['expired']+" ", worker['invalid']+" ", worker['lastShare'])
     return table
 
 def formatPaymentsTable(payments):
-    table = " {:^49}   {:^21}   {:^19}   {:^19}\n".format("TRANSACTION HASH", "AMOUNT", "DATE", "MIXIN")
+    table = " \033[32m {:^49}   {:^21}   {:^19}   {:^19}\033[00m\n".format("TRANSACTION HASH", "AMOUNT", "DATE", "MIXIN")
     table += " {:^49}   {:^21}   {:^19}   {:^19}\n".format("-"*49, "-"*21, "-"*19, "-"*19)
     for payment in payments:
         table += " {:^49}   {:^21}   {:^19}   {:^19}\n".format(payment['hash'], payment['amount']+"€", payment['date'], payment['mixin'])
@@ -45,7 +54,7 @@ if __name__ == "__main__":
     if(len(sys.argv[1:]) > 0):  #if no argument was passed
         # get env variables
         try:
-            opts, _ = getopt.getopt(sys.argv[1:], "ha:swp", ["help", "address", "stats", "workers", "payments"])
+            opts, _ = getopt.getopt(sys.argv[1:], "ha:swp", ["help", "address=this wallet's worker statsthis wallet's worker stats", "stats", "workers", "payments"])
         except getopt.GetoptError:
             print("Incorrect usage, use 'xmrpool-check.py -h' to see correct usage")
             sys.exit(2)
@@ -54,10 +63,10 @@ if __name__ == "__main__":
             if opt in ("-h", "--help"):
                 printHelp()
                 break
-            elif opt in ("-a", "--address="):
+            elif opt in ("-a", "--address"):
                 address = arg
                 data = getWalletData(address)
-                print("\n")
+                print() #newline
 
                 if 'error' in data:
                     print("[ERROR]", data['error'])
