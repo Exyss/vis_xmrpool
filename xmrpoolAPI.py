@@ -1,4 +1,11 @@
+# Unofficial API module - last updated: 02.02.21
+# Get the latest version here: https://github.com/Exyss/xmrpool-api.git
+#
 import urllib.request, json
+from time import strftime
+from time import gmtime
+
+strftime("%H:%M:%S", gmtime(666))
 
 def getWalletData(address):
 
@@ -26,8 +33,8 @@ def _formatWorkerData(worker):
     # get data if found
     if ('workerId' in worker): data['workerId'] = worker['workerId']
     if ('hashrate' in worker): data['hashrate'] = worker['hashrate']
-    if ('hashes' in worker): data['hashrate'] = worker['hashes']
-    if ('lastShare' in worker): data['lastShare'] = worker['lastShare']
+    if ('hashes' in worker): data['hashes'] = worker['hashes']
+    if ('lastShare' in worker): data['lastShare'] = strftime("%d-%m-%y %H:%M:%S", gmtime(int(worker['lastShare'])))
     if ('expired' in worker): data['expired'] = worker['expired']
     if ('invalid' in worker): data['invalid'] = worker['invalid']
     return data
