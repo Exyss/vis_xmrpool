@@ -2,12 +2,8 @@
 #/usr/bin/python3
 from xmrpoolAPI import *
 from time import sleep
-import sys, getopt
-
-def applyRedText(text): return "\033[91m {}".format(text)
-def applyGreenText(text): return "\033[92m {}".format(text)
-def applyYellowText(text): return "\033[93m {}".format(text)
-def applyCyanText(text): return "{}".format(text)
+from sys import exit
+import getopt 
 
 def printHelp():
     print("---------------------------------",
@@ -75,14 +71,14 @@ if __name__ == "__main__":
                     sys.exit(1)
                 else:
                     options = {}
-                    for opt, arg in opts:
+                    for opt, arg in opts:   # get bonus options
                         if opt in ("-s", "--stats"): options['s'] = True
                         if opt in ("-w", "--workers"): options['w'] = True
                         if opt in ("-p", "--payments"): options['p'] = True
                         if opt in ("-t", "--time"): options['t'] = int(arg)
 
                     while True:
-                        if('s' not in options and 'w' not in options and 'p' not in options):
+                        if('s' not in options and 'w' not in options and 'p' not in options):   # if no flag is set, print all of them
                             print(formatTotalStatsTable(getTotalStats(data)))
                             print(formatWorkersTable(getWorkers(data)))
                             print(formatPaymentsTable(getPayments(data)))
