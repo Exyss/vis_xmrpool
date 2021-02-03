@@ -2,8 +2,7 @@
 #/usr/bin/python3
 from xmrpoolAPI import *
 from time import sleep
-from sys import exit
-import getopt 
+import sys, getopt 
 
 def printHelp():
     print("---------------------------------",
@@ -63,21 +62,22 @@ if __name__ == "__main__":
                 break
             elif opt in ("-a", "--address"):
                 address = arg
-                data = getWalletData(address)
-                print() #newline
 
-                if 'error' in data:
-                    print("[ERROR]", data['error'])
-                    sys.exit(1)
-                else:
-                    options = {}
-                    for opt, arg in opts:   # get bonus options
-                        if opt in ("-s", "--stats"): options['s'] = True
-                        if opt in ("-w", "--workers"): options['w'] = True
-                        if opt in ("-p", "--payments"): options['p'] = True
-                        if opt in ("-t", "--time"): options['t'] = int(arg)
+                while True:
+                    data = getWalletData(address)
+                    print() #newline
 
-                    while True:
+                    if 'error' in data:
+                        print("[ERROR]", data['error'])
+                        sys.exit(1)
+                    else:
+                        options = {}
+                        for opt, arg in opts:   # get bonus options
+                            if opt in ("-s", "--stats"): options['s'] = True
+                            if opt in ("-w", "--workers"): options['w'] = True
+                            if opt in ("-p", "--payments"): options['p'] = True
+                            if opt in ("-t", "--time"): options['t'] = int(arg)
+
                         if('s' not in options and 'w' not in options and 'p' not in options):   # if no flag is set, print all of them
                             print(formatTotalStatsTable(getTotalStats(data)))
                             print(formatWorkersTable(getWorkers(data)))
