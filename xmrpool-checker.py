@@ -1,17 +1,18 @@
 # Get the latest version here: https://github.com/Exyss/xmrpool-check.git
 #/usr/bin/python3
 from xmrpoolAPI import *
+from time import sleep
 import sys, getopt
 
-def applyRedText(text): return "\033[91m {}\033[00m".format(text)
-def applyGreenText(text): return "\033[92m {}\033[00m".format(text)
-def applyYellowText(text): return "\033[93m {}\033[00m".format(text)
-def applyCyanText(text): return "\033[96m {}\033[00m".format(text)
+def applyRedText(text): return "\033[91m {}".format(text)
+def applyGreenText(text): return "\033[92m {}".format(text)
+def applyYellowText(text): return "\033[93m {}".format(text)
+def applyCyanText(text): return "{}".format(text)
 
 def printHelp():
-    print("----------------------------",
-          "  xmrpool.eu Stat Visualizer",
-          "           by Exyss",
+    print("---------------------------------",
+          "    xmrpool.eu Stat Checker",
+          "               by Exyss",
           "",
           "DESCRIPTION",
           "\tFast visualization of all the statistics linked to a wallet",
@@ -19,31 +20,32 @@ def printHelp():
           "",
           "USAGE",
           "\t-h, --help",
-          "\t\tDisplay help prompt",
+          "\t\tDisplay help prompt.",
           "",
           "\t-a <wallet_address>",
-          "\t\tSame all info linked to this wallet",
+          "\t\tSame all info linked to this wallet.",
           "",
-          "\t-a <wallet_address> [-s, --stats][-w, --workers][-h, --help]",
-          "\t\tDisplay ",
+          "\t-a <wallet_address> [-s, --stats][-w, --workers][-p, --payments][-t, --time <seconds>]",
+          "\t\tDisplay only the defined set of info. If a time interval was set, the program",
+          "\t\twill repeat after the defined interval has passed. To stop it, use Ctrl+C.",
           sep="\n")
 
 def formatTotalStatsTable(totalStats):
-    table =  "\t\t\033[96m {:<15}\033[00m | {:<29}\t\t\033[96m{:<15}\033[00m | {:<29}\n".format("PENDING BALANCE", totalStats['balance']+" XMR", "TOTAL HASHRATE", totalStats['hashrate'])
-    table += "\t\t\033[96m {:<15}\033[00m | {:<29}\t\t\033[96m{:<15}\033[00m | {:<29}\n".format("TOTAL PAID", totalStats['paid']+" XMR", "TOTAL HASHES", totalStats['hashes'])
-    table += "\t\t\033[96m {:<15}\033[00m | {:<29}\t\t\033[96m{:<15}\033[00m | {:<29}\n".format("LAST REWARD", totalStats['lastReward']+" XMR", "TOTAL EXPIRED", totalStats['expired'])
-    table += "\t\t\033[96m {:<15}\033[00m | {:<29}\t\t\033[96m{:<15}\033[00m | {:<29}\n".format("LAST SHARE", totalStats['lastShare'], "TOTAL INNVALID", totalStats['invalid'])
+    table =  "\t\t{:<15} | {:<29}\t\t{:<15} | {:<29}\n".format("PENDING BALANCE", totalStats['balance']+" XMR", "TOTAL HASHRATE", totalStats['hashrate'])
+    table += "\t\t{:<15} | {:<29}\t\t{:<15} | {:<29}\n".format("TOTAL PAID", totalStats['paid']+" XMR", "TOTAL HASHES", totalStats['hashes'])
+    table += "\t\t{:<15} | {:<29}\t\t{:<15} | {:<29}\n".format("LAST REWARD", totalStats['lastReward']+" XMR", "TOTAL EXPIRED", totalStats['expired'])
+    table += "\t\t{:<15} | {:<29}\t\t{:<15} | {:<29}\n".format("LAST SHARE", totalStats['lastShare'], "TOTAL INNVALID", totalStats['invalid'])
     return table
 
 def formatWorkersTable(workers):
-    table = " \033[91m{:^21}   {:^14}   {:^16}   {:^16}   {:^16}   {:^19}\033[00m\n".format("WORKER ID", "HASHRATE", "HASHES", "EXPIRED", "INVALID", "LAST SHARE")
+    table = " {:^21}   {:^14}   {:^16}   {:^16}   {:^16}   {:^19}\n".format("WORKER ID", "HASHRATE", "HASHES", "EXPIRED", "INVALID", "LAST SHARE")
     table += " {:^21}   {:^14}   {:^16}   {:^16}   {:^16}   {:^19}\n".format("-"*21, "-"*14, "-"*16, "-"*16, "-"*16, "-"*19)
     for worker in workers:
         table += " {:<21}   {:^14}   {:>16}   {:>16}   {:>16}   {:^19}\n".format(" "+worker['workerId'], worker['hashrate'], worker['hashes']+" ", worker['expired']+" ", worker['invalid']+" ", worker['lastShare'])
     return table
 
 def formatPaymentsTable(payments):
-    table = " \033[32m {:^49}   {:^21}   {:^19}   {:^19}\033[00m\n".format("TRANSACTION HASH", "AMOUNT", "DATE", "MIXIN")
+    table = " {:^49}   {:^21}   {:^19}   {:^19}\n".format("TRANSACTION HASH", "AMOUNT", "DATE", "MIXIN")
     table += " {:^49}   {:^21}   {:^19}   {:^19}\n".format("-"*49, "-"*21, "-"*19, "-"*19)
     for payment in payments:
         table += " {:^49}   {:^21}   {:^19}   {:^19}\n".format(payment['hash'], payment['amount']+"€", payment['date'], payment['mixin'])
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     if(len(sys.argv[1:]) > 0):  #if no argument was passed
         # get env variables
         try:
-            opts, _ = getopt.getopt(sys.argv[1:], "ha:swp", ["help", "address=this wallet's worker statsthis wallet's worker stats", "stats", "workers", "payments"])
+            opts, _ = getopt.getopt(sys.argv[1:], "ha:swpt:", ["help", "address=", "stats", "workers", "payments", "time="])
         except getopt.GetoptError:
             print("Incorrect usage, use 'xmrpool-check.py -h' to see correct usage")
             sys.exit(2)
@@ -72,19 +74,27 @@ if __name__ == "__main__":
                     print("[ERROR]", data['error'])
                     sys.exit(1)
                 else:
-                    if len(opts) == 1:
-                        print(formatTotalStatsTable(getTotalStats(data)))
-                        print(formatWorkersTable(getWorkers(data)))
-                        print(formatPaymentsTable(getPayments(data)))
-                    else:
-                        options = {"s": False, "w": False, "p": False}
-                        for opt, _ in opts:
-                            if opt in ("-s", "--stats"): options['s'] = True
-                            if opt in ("-w", "--workers"): options['w'] = True
-                            if opt in ("-p", "--payments"): options['p'] = True
-                        if(options['s'] == True): print(formatTotalStatsTable(getTotalStats(data)))
-                        if(options['w'] == True): print(formatWorkersTable(getWorkers(data)))
-                        if(options['p'] == True): print(formatPaymentsTable(getPayments(data)))
+                    options = {}
+                    for opt, arg in opts:
+                        if opt in ("-s", "--stats"): options['s'] = True
+                        if opt in ("-w", "--workers"): options['w'] = True
+                        if opt in ("-p", "--payments"): options['p'] = True
+                        if opt in ("-t", "--time"): options['t'] = int(arg)
+
+                    while True:
+                        if('s' not in options and 'w' not in options and 'p' not in options):
+                            print(formatTotalStatsTable(getTotalStats(data)))
+                            print(formatWorkersTable(getWorkers(data)))
+                            print(formatPaymentsTable(getPayments(data)))
+                        else:
+                            if('s' in options): print(formatTotalStatsTable(getTotalStats(data)))
+                            if('w' in options): print(formatWorkersTable(getWorkers(data)))
+                            if('p' in options): print(formatPaymentsTable(getPayments(data)))
+
+                        if('t' in options): # repeat if time interval was set
+                            sleep(options['t'])
+                            print("\n\n")
+                        else: break
                 break
     else:
         print("Incorrect usage, use 'xmrpool-check.py -h' to see correct usage")
