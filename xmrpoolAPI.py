@@ -1,9 +1,8 @@
-# Unofficial API module - last updated: 02.02.21
-# Get the latest version here: https://github.com/Exyss/xmrpool-api.git
+# Unofficial API module - last updated: 04.02.21
+# Get the latest version here: https://github.com/Exyss/xmrpool-python-api
 #
 import urllib.request, json
-from time import strftime
-from time import gmtime
+import datetime
 
 def getWalletData(address):
     xmrpoolAPI_url = "https://web.xmrpool.eu:8119/stats_address?address="+address+"&longpoll=false"
@@ -31,7 +30,7 @@ def _formatTotalStatsData(totalStats):
     data = {'balance': "0",
             'lastReward': "0",
             'paid': "0",
-            'hashrate': "0.00 H",
+            'hashrate': "0.00 H/s",
             'hashes': "0",
             'expired': "0",
             'invalid': "0",
@@ -41,17 +40,17 @@ def _formatTotalStatsData(totalStats):
     if ('balance' in totalStats): data['balance'] = "{:.12f}".format(int(totalStats['balance'])/10**12)
     if ('last_reward' in totalStats): data['lastReward'] = "{:.12f}".format(int(totalStats['last_reward'])/10**12)
     if ('paid' in totalStats): data['paid'] = "{:.12f}".format(int(totalStats['paid'])/10**12)
-    if ('hashrate' in totalStats): data['hashrate'] = totalStats['hashrate']
+    if ('hashrate' in totalStats): data['hashrate'] = totalStats['hashrate']+"/s"
     if ('hashes' in totalStats): data['hashes'] = f"{int(totalStats['hashes']):,}"
     if ('expired' in totalStats): data['expired'] = f"{int(totalStats['expired']):,}"
     if ('invalid' in totalStats): data['invalid'] = f"{int(totalStats['invalid']):,}"
-    if ('lastShare' in totalStats): data['lastShare'] = strftime("%d-%m-%y %H:%M:%S", gmtime(int(totalStats['lastShare'])))
+    if ('lastShare' in totalStats): data['lastShare'] = _formatDatetime(int(totalStats['lastShare']))
     return data
 
 def _formatWorkerData(worker):
     # define default values
     data = {'workerId': "unknown",
-            'hashrate': "0.00 H",
+            'hashrate': "0.00 H/s",
             'hashes': "0",
             'lastShare': "unknown",
             'expired': "0",
@@ -59,11 +58,11 @@ def _formatWorkerData(worker):
 
     # get data if found
     if ('workerId' in worker): data['workerId'] = worker['workerId']
-    if ('hashrate' in worker): data['hashrate'] = worker['hashrate']
+    if ('hashrate' in worker): data['hashrate'] = worker['hashrate']+"/s"
     if ('hashes' in worker): data['hashes'] = f"{int(worker['hashes']):,}"
     if ('expired' in worker): data['expired'] = f"{int(worker['expired']):,}"
     if ('invalid' in worker): data['invalid'] = f"{int(worker['invalid']):,}"
-    if ('lastShare' in worker): data['lastShare'] = strftime("%d-%m-%y %H:%M:%S", gmtime(int(worker['lastShare'])))
+    if ('lastShare' in worker): data['lastShare'] = _formatDatetime(int(worker['lastShare']))
     return data
 
 def _formatPaymentData(payment):
@@ -76,6 +75,11 @@ def _formatPaymentData(payment):
     # get data if found
     if ('amount' in payment): data['amount'] = payment['amount']
     if ('hash' in payment): data['hash'] = payment['hash']
-    if ('time' in payment): data['date'] = strftime("%d-%m-%y %H:%M:%S", gmtime(int(payment['time'])))
+    if ('time' in payment): data['date'] = _formatDatetime(int(payment['time']))
     if ('mixin' in payment): data['mixin'] = payment['mixin']
     return data
+
+def _formatDatetime(seconds):
+    utc_date = datetime.datetime.fromtimestamp(seconds)
+    local_date = utc_date.astimezone(datetime.datetime.now().tzname())
+    return local_date.strftime("%d-%m-%y %H:%M:%S")
