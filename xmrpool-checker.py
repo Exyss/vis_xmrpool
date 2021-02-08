@@ -98,7 +98,7 @@ def formatTotalStatsTable(totalStats, useFullFormat):
     else:
         table += "\t{:<15} | {:<29}\n".format("PENDING BALANCE", totalStats['balance']+" XMR")
         table += "\t{:<15} | {:<29}\n".format("TOTAL PAID", totalStats['paid']+" XMR")
-        table += "\t{:<15} | {:<29}\n".format("TOTAL HASHRATE", totalStats['hashrate']+" XMR")
+        table += "\t{:<15} | {:<29}\n".format("TOTAL HASHRATE", totalStats['hashrate'])
         table += "\t{:<15} | {:<29}\n".format("LAST SHARE", totalStats['lastShare'])
     return table
 
