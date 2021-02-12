@@ -3,7 +3,8 @@
 
 from xmrpoolAPI import *
 from time import sleep
-import sys, getopt 
+from datetime import datetime
+import sys, getopt, os
 
 def printHelp():
     print("---------------------------------",
@@ -47,7 +48,7 @@ def printHelp():
           sep="\n")
 
 def getExtraOptions(opts):
-    options = {'l': False, 'f': False}
+    options = {'f': False}
     for opt, arg in opts:   # get bonus options
         if opt in ("-s", "--stats"): options['s'] = True
         if opt in ("-w", "--workers"): options['w'] = True
@@ -61,32 +62,35 @@ def getExtraOptions(opts):
             else: raise Exception("-t must also be set in order to use -c")
     return options
 
-def plotData(options):
-    data = getWalletData(address)
-    print() #newline
-
-    if 'error' in data:
-        print("[ERROR]", data['error'])
-        sys.exit(1)
+def plotData(data, options):
+    if('s' not in options and 'w' not in options and 'p' not in options):   # if no flag is set, print all of them
+        print(formatTotalStatsTable(getTotalStats(data), options['f']))
+        print(formatWorkersTable(getWorkers(data), options['f']))
+        print(formatPaymentsTable(getPayments(data), options['f']))
     else:
+        if('s' in options): print(formatTotalStatsTable(getTotalStats(data), options['f']))
+        if('w' in options): print(formatWorkersTable(getWorkers(data), options['f']))
+        if('p' in options): print(formatPaymentsTable(getPayments(data), options['f']))
 
-        if('s' not in options and 'w' not in options and 'p' not in options):   # if no flag is set, print all of them
-            print(formatTotalStatsTable(getTotalStats(data), options['f']))
-            print(formatWorkersTable(getWorkers(data), options['f']))
-            print(formatPaymentsTable(getPayments(data), options['f']))
-        else:
-            if('s' in options): print(formatTotalStatsTable(getTotalStats(data), options['f']))
-            if('w' in options): print(formatWorkersTable(getWorkers(data), options['f']))
-            if('p' in options): print(formatPaymentsTable(getPayments(data), options['f']))
+def logData(data, sessionTimestamp):
+    try:
+        with open("logs/Session "+sessionTimestamp+".log", "a") as logfile:
+            logfile.write("---------------------\n")
+            logfile.write(str(getTotalStats(data))+"\n")
+            logfile.write(str(getWorkers(data))+"\n")
+    except Exception as e:
+        print("[ERROR] An error occurred while trying to log data:", e)
 
-        if('c' in options): # repeat only c times if counter was set
-            options['c'] -= 1
-            if(options['c'] == 0): sys.exit(0)
+def createLogFile(sessionTimestamp, usedInterval=None):
+    try:
+        if(not os.path.isdir("logs")): os.mkdir("logs")  #create logs folder if it doesn't exist
 
-        if('t' in options): # repeat every t seconds if timer was set
-            sleep(options['t'])
-            print("\n\n")
-        else: sys.exit(0) # = execute only one time
+        with open("logs/Session "+sessionTimestamp+".log", "w") as logfile:
+            logfile.write("--- Session: "+sessionTimestamp+"\n")
+            if(usedInterval == None): logfile.write("--- Interval: None\n")
+            else: logfile.write("--- Interval: "+str(usedInterval)+"\n")
+    except Exception as e:
+        print("[ERROR] An error occurred while trying to create logfile:", e)
 
 def formatTotalStatsTable(totalStats, useFullFormat):
     table = ""
@@ -129,7 +133,7 @@ def formatPaymentsTable(payments, useFullFormat):
         for payment in payments:
             table += " {:^21}   {:^19}   {:^19}\n".format(payment['amount']+"€", payment['date'], payment['mixin'])
     return table
-
+   
 if __name__ == "__main__":
 
     if(len(sys.argv[1:]) > 0):  #if no argument was passed
@@ -149,12 +153,32 @@ if __name__ == "__main__":
                 break
 
             elif opt in ("-a", "--address"):
-
                 try:
                     address = arg
                     options = getExtraOptions(opts)
+                    if('l' in options): #if logging is enabled
+                        sessionTimestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        if('t' in options): createLogFile(sessionTimestamp, options['t']) #track data fetching interval
+                        else: createLogFile(sessionTimestamp)
+                    
                     while True:
-                        plotData(options)
+                        print()
+                        data = getWalletData(address)
+                        if 'error' in data:
+                            print("[ERROR]", data['error'])
+                            sys.exit(1)
+
+                        plotData(data, options)
+                        if('l' in options): logData(data, sessionTimestamp)
+
+                        if('c' in options): # repeat only c times if counter was set
+                            options['c'] -= 1
+                            if(options['c'] == 0): break
+
+                        if('t' in options): # repeat every t seconds if timer was set
+                            sleep(options['t'])
+                            print("\n")
+                        else: break # = execute only one time
 
                 except Exception as e:
                     print("[ERROR]", e)
