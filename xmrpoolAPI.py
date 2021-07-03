@@ -21,8 +21,9 @@ def getWorkers(data):
 
 def getPayments(data):
     payments = []
-    for payment in data['payments']:
-        payments.append(_formatPaymentData(payment))
+    for i, payment in enumerate(data['payments']):
+        if i < len(data['payments'])-1:
+            payments.append(_formatPaymentData(payment))
     return payments
 
 def _formatTotalStatsData(totalStats):
@@ -73,10 +74,12 @@ def _formatPaymentData(payment):
             'mixin': "unknown"}
 
     # get data if found
-    if ('amount' in payment): data['amount'] = payment['amount']
-    if ('hash' in payment): data['hash'] = payment['hash']
-    if ('time' in payment): data['date'] = _formatDatetime(int(payment['time']))
-    if ('mixin' in payment): data['mixin'] = payment['mixin']
+    bits = payment.split(':')
+    if len(bits) == 4:
+        data['hash'] = bits[0][:35]+"..."
+        data['amount'] = "{:.12f}".format(int(bits[1])/10**12)
+        data['date'] = _formatDatetime(int(bits[2]))
+        data['mixin'] = bits[3]
     return data
 
 def _formatDatetime(seconds):
