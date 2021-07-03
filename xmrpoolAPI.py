@@ -21,9 +21,11 @@ def getWorkers(data):
 
 def getPayments(data):
     payments = []
-    for i, payment in enumerate(data['payments']):
-        if i < len(data['payments'])-1:
-            payments.append(_formatPaymentData(payment))
+    for i in range(len(data['payments'])-1):
+        payment = data['payments'][i]
+        payment_date = data['payments'][i+1]
+        payments.append(_formatPaymentData(payment, payment_date))
+        i += 1
     return payments
 
 def _formatTotalStatsData(totalStats):
@@ -66,7 +68,7 @@ def _formatWorkerData(worker):
     if ('lastShare' in worker): data['lastShare'] = _formatDatetime(int(worker['lastShare']))
     return data
 
-def _formatPaymentData(payment):
+def _formatPaymentData(payment, payment_date):
     # define default values
     data = {'hash': "unknown",
             'amount': "0",
@@ -78,7 +80,7 @@ def _formatPaymentData(payment):
     if len(bits) == 4:
         data['hash'] = bits[0][:35]+"..."
         data['amount'] = "{:.12f}".format(int(bits[1])/10**12)
-        data['date'] = _formatDatetime(int(bits[2]))
+        data['date'] = _formatDatetime(int(payment_date))
         data['mixin'] = bits[3]
     return data
 
